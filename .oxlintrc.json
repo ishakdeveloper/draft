@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "import"],
+  "categories": { "correctness": "error", "suspicious": "warn" },
+  "rules": { "no-console": "off" },
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    ".wrangler",
+    "dist",
+    "supabase/.temp",
+    "packages/shared/src/database.types.ts"
+  ]
+}
