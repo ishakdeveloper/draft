@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { contentHash, normalizeText } from "./content-hash";
+import { contentHash, normalizeText } from "../content-hash";
 
 describe("normalizeText", () => {
   it("collapses whitespace and line endings", () => {

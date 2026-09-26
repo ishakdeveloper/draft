@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { ALLOWED_TRANSITIONS, canTransition, DRAFT_STATUSES } from "./transitions";
+import { ALLOWED_TRANSITIONS, canTransition, DRAFT_STATUSES } from "../transitions";
 
 describe("transitions", () => {
   it("only ever moves forward or toward a person", () => {

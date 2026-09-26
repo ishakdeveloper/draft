@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { decideIngest, type DraftSummary } from "./decide-ingest";
+import { decideIngest, type DraftSummary } from "../decide-ingest";
 
 const draft = (over: Partial<DraftSummary>): DraftSummary => ({
   id: over.id ?? "d1",

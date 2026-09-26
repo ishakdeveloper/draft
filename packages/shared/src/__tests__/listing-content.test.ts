@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { ListingContentSchema, TranslationsSchema } from "./listing-content";
+import { ListingContentSchema, TranslationsSchema } from "../listing-content";
 
 const valid = {
   title: "Hydrating Night Serum",

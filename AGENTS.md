@@ -4,7 +4,7 @@
 
 - Bun workspaces: `apps/*`, `packages/*`. Scripts run through `bun run`.
 - File names are kebab-case (`draft-review.tsx`, `content-hash.ts`). No PascalCase files.
-- Tests sit next to the code as `*.test.ts` and use `bun:test`.
+- Tests live in a `__tests__` folder beside the code they cover, named `*.test.ts`, and use `bun:test`.
 
 ## Configuration
 
