@@ -155,7 +155,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ step: 'generate', message: String($json.error?.message ?? $json.error ?? 'step failed'), detail: $json.error ?? null }) }}",
+        "jsonBody": "={{ JSON.stringify({ step: 'generate', message: String($json.error?.message ?? 'step failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
         "options": {
           "timeout": 30000
         }

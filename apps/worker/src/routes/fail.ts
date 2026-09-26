@@ -11,6 +11,28 @@ const BodySchema = z.object({
   detail: z.unknown().optional(),
 });
 
+const DETAIL_KEYS = ["status", "code", "name", "message"] as const;
+
+/**
+ * Keep only a small allowlist of the caller's error detail. Orchestrators tend to send whole HTTP
+ * error objects, which include request headers and therefore secrets. Those never reach the database.
+ */
+export function sanitizeDetail(detail: unknown): Json {
+  if (detail === null || detail === undefined) return null;
+  if (typeof detail === "string") return detail.slice(0, 500);
+  if (typeof detail === "number" || typeof detail === "boolean") return detail;
+  if (typeof detail === "object") {
+    const out: Record<string, Json> = {};
+    for (const key of DETAIL_KEYS) {
+      const value = (detail as Record<string, unknown>)[key];
+      if (typeof value === "string") out[key] = value.slice(0, 500);
+      else if (typeof value === "number" || typeof value === "boolean") out[key] = value;
+    }
+    return out;
+  }
+  return null;
+}
+
 /** Called by the orchestrator when a step gave up. Moves an in-flight draft to failed; otherwise only records. */
 export const failRoute = new Hono<AppContext>().post("/drafts/:id/fail", async (c) => {
   const { db } = c.get("deps");

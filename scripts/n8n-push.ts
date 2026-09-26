@@ -75,7 +75,7 @@ const files =
     ? args.map((f) => path.resolve(f))
     : (await readdir(path.join(root, "n8n/workflows")))
         .filter((f) => f.endsWith(".json"))
-        .sort()
+        .toSorted()
         .map((f) => path.join(root, "n8n/workflows", f));
 
 const creds = await ensureCredentials();
