@@ -21,20 +21,24 @@ export interface ListingGenerator {
 }
 
 export class ClaudeListingGenerator implements ListingGenerator {
-  private readonly client: Anthropic;
+  private client: Anthropic | null = null;
 
   constructor(
-    apiKey: string,
+    private readonly apiKey: string | null,
     private readonly model: string,
-  ) {
+  ) {}
+
+  private getClient(): Anthropic {
+    if (!this.apiKey) throw new AppError("config", "ANTHROPIC_API_KEY is not set");
     // n8n retries the whole step, so the SDK retries once at most.
-    this.client = new Anthropic({ apiKey, timeout: 90_000, maxRetries: 1 });
+    this.client ??= new Anthropic({ apiKey: this.apiKey, timeout: 90_000, maxRetries: 1 });
+    return this.client;
   }
 
   async generate(brand: BrandVoice, product: ProductFacts): Promise<GenerateResult> {
     let response;
     try {
-      response = await this.client.messages.parse({
+      response = await this.getClient().messages.parse({
         model: this.model,
         max_tokens: 4096,
         system: [

@@ -2,15 +2,12 @@
  * The one place that reads the Worker environment. `Env` comes from `wrangler types`
  * (bindings and vars); secrets are declared here because they are not in wrangler.jsonc.
  */
-const SECRET_NAMES = [
-  "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "ANTHROPIC_API_KEY",
-  "PIPELINE_SECRET",
-] as const;
+const SECRET_NAMES = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "PIPELINE_SECRET"] as const;
 
 type SecretName = (typeof SECRET_NAMES)[number];
 export type Secrets = Record<SecretName, string> & {
+  /** Only needed by the generate step; ingest and fail work without it. */
+  ANTHROPIC_API_KEY?: string;
   SHOPIFY_CLIENT_ID?: string;
   SHOPIFY_CLIENT_SECRET?: string;
 };
@@ -20,7 +17,7 @@ export type WorkerEnv = Env & Secrets;
 export interface Config {
   supabaseUrl: string;
   supabaseServiceRoleKey: string;
-  anthropicApiKey: string;
+  anthropicApiKey: string | null;
   pipelineSecret: string;
   claudeModel: string;
   shopifyApiVersion: string;
@@ -42,7 +39,7 @@ export function readConfig(env: WorkerEnv): Config {
   return {
     supabaseUrl: env.SUPABASE_URL,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,
-    anthropicApiKey: env.ANTHROPIC_API_KEY,
+    anthropicApiKey: env.ANTHROPIC_API_KEY ?? null,
     pipelineSecret: env.PIPELINE_SECRET,
     claudeModel: env.CLAUDE_MODEL,
     shopifyApiVersion: env.SHOPIFY_API_VERSION,
