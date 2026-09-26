@@ -36,9 +36,10 @@ person approving it.
 ```sh
 bun install
 bun run gate          # format, typecheck, lint, secret scan, tests
-bun run db:push       # apply migrations to the linked Supabase project
-bun run db:types      # regenerate packages/shared/src/database.types.ts
 ```
+
+Migrations are applied and `packages/shared/src/database.types.ts` is regenerated through the
+Supabase MCP (`apply_migration`, `generate_typescript_types`), see AGENTS.md.
 
 Environment variables are listed in each app's `.env.example`. Secrets never go in
 the repo.

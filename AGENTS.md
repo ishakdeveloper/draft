@@ -14,8 +14,9 @@
 
 ## Database
 
-- Plain SQL migrations in `supabase/migrations`, numbered `NNNN_name.sql`, applied to the
-  linked remote project. No local Supabase stack.
+- Plain SQL migrations in `supabase/migrations`, numbered `NNNN_name.sql`. They are the source of
+  truth and are applied to the remote project with the Supabase MCP `apply_migration` tool, in
+  order, using the file name (without number) as the migration name. No local Supabase stack.
 - Every tenant table has RLS on. Policies call `private.is_brand_member()` and wrap
   `auth.uid()` in a subselect. Helper functions live in the `private` schema.
 - Status transitions are enforced in `private.enforce_draft_transition()` and mirrored in

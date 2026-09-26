@@ -15,8 +15,7 @@
     "test": "bun test",
     "e2e": "bun run --filter '*' e2e",
     "gate": "bun run format && bun run check && bun run lint && bun run secrets && bun run test",
-    "db:push": "supabase db push --linked",
-    "db:types": "supabase gen types typescript --linked --schema public > packages/shared/src/database.types.ts && prettier --write packages/shared/src/database.types.ts"
+    "db:types": "echo 'Regenerate with the Supabase MCP generate_typescript_types tool and write the result to packages/shared/src/database.types.ts' && exit 1"
   },
   "devDependencies": {
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.6",

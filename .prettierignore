@@ -11,3 +11,5 @@ supabase/.branches
 bun.lock
 packages/shared/src/database.types.ts
 n8n/workflows/*.json
+.agents
+skills-lock.json
