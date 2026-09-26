@@ -1,0 +1,240 @@
+{
+  "name": "01 Shopify product to draft",
+  "nodes": [
+    {
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Replay webhook",
+      "webhookId": "draft-replay-product",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "replay-product",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft replay secret}}"
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 0],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1000000-0000-4000-8000-000000000001",
+              "name": "shop_domain",
+              "value": "={{ $json.body?.shop_domain ?? $json.shop_domain ?? 'draft-demo.myshopify.com' }}",
+              "type": "string"
+            },
+            {
+              "id": "b1000000-0000-4000-8000-000000000002",
+              "name": "topic",
+              "value": "={{ $json.body?.topic ?? $json.topic ?? 'products/update' }}",
+              "type": "string"
+            },
+            {
+              "id": "b1000000-0000-4000-8000-000000000003",
+              "name": "product",
+              "value": "={{ $json.body?.product ?? $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [480, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "${WORKER_URL}/v1/shopify/products",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ topic: $json.topic, shop_domain: $json.shop_domain, product: $json.product }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Draft created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [720, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "draft_created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "position": [960, -100],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $json.draft_id }}/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Skipped",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 140],
+      "parameters": {}
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "Mark failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [1200, 20],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/fail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: 'generate', message: String($json.error?.message ?? $json.error ?? 'step failed'), detail: $json.error ?? null }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    }
+  ],
+  "connections": {
+    "Replay webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Ingest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest": {
+      "main": [
+        [
+          {
+            "node": "Draft created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft created?": {
+      "main": [
+        [
+          {
+            "node": "Generate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Mark failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 600,
+    "executionOrder": "v1"
+  }
+}

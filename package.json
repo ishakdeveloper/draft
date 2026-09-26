@@ -15,7 +15,9 @@
     "test": "bun test",
     "e2e": "bun run --filter '*' e2e",
     "gate": "bun run format && bun run check && bun run lint && bun run secrets && bun run test",
-    "db:types": "echo 'Regenerate with the Supabase MCP generate_typescript_types tool and write the result to packages/shared/src/database.types.ts' && exit 1"
+    "db:types": "echo 'Regenerate with the Supabase MCP generate_typescript_types tool and write the result to packages/shared/src/database.types.ts' && exit 1",
+    "n8n:push": "bun scripts/n8n-push.ts",
+    "n8n:export": "bun scripts/n8n-export.ts"
   },
   "devDependencies": {
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.6",
