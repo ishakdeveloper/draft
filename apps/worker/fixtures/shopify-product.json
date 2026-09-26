@@ -1,0 +1,16 @@
+{
+  "topic": "products/update",
+  "shop_domain": "draft-demo.myshopify.com",
+  "product": {
+    "id": 9000000000002,
+    "admin_graphql_api_id": "gid://shopify/Product/9000000000002",
+    "title": "Birch Sap Toner",
+    "body_html": "<p>toner. birch sap, niacinamide 3%, 150ml. alcohol free. for all skin types</p>",
+    "vendor": "Nordkind Skin",
+    "handle": "birch-sap-toner",
+    "product_type": "Toner",
+    "tags": "face, toner, new",
+    "status": "active",
+    "updated_at": "2026-09-26T09:00:00+02:00"
+  }
+}

@@ -13,3 +13,4 @@ packages/shared/src/database.types.ts
 n8n/workflows/*.json
 .agents
 skills-lock.json
+apps/worker/worker-configuration.d.ts

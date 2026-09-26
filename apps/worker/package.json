@@ -1,0 +1,26 @@
+{
+  "name": "@draft/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types",
+    "check": "wrangler types && tsc -p tsconfig.json",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@draft/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2",
+    "hono": "^4.13.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^26.6.3",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.141.0"
+  }
+}

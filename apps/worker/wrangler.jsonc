@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "draft-worker",
+  "main": "src/index.ts",
+  "account_id": "f4599b98c2430a831bcfc291d156a988",
+  "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 1 },
+  },
+  "ai": { "binding": "AI" },
+  "vars": {
+    "APP_VERSION": "0.1.0",
+    "SHOPIFY_API_VERSION": "2025-07",
+    "CLAUDE_MODEL": "claude-opus-5",
+    "IMAGE_PROVIDER": "workers-ai",
+    "IMAGE_DAILY_LIMIT": "40",
+  },
+  // Secrets (wrangler secret put): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY,
+  // PIPELINE_SECRET, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET. Locally they live in .dev.vars.
+}
