@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "check": "next typegen && tsc -p tsconfig.json"
+    "check": "next typegen && tsc -p tsconfig.json",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@draft/shared": "workspace:*",
@@ -27,6 +28,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/bun": "latest",
     "@types/node": "^26.6.3",

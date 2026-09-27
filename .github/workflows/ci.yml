@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      WRANGLER_SEND_METRICS: "false"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      TEST_REVIEWER_EMAIL: ${{ secrets.TEST_REVIEWER_EMAIL }}
+      TEST_REVIEWER_PASSWORD: ${{ secrets.TEST_REVIEWER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - name: Format
+        run: bun run format
+      - name: Typecheck
+        run: bun run check
+      - name: Lint
+        run: bun run lint
+      - name: Secret scan
+        run: bun run secrets
+      - name: Unit and database access tests
+        run: bun run test
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: End-to-end
+        run: bun run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results
+          retention-days: 7
