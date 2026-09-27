@@ -1,14 +1,28 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "import"],
-  "categories": { "correctness": "error", "suspicious": "warn" },
-  "rules": { "no-console": "off" },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-console": "off",
+    "import/no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["**/*.css", "server-only"]
+      }
+    ]
+  },
   "ignorePatterns": [
     "node_modules",
     ".next",
     ".wrangler",
     "dist",
     "supabase/.temp",
-    "packages/shared/src/database.types.ts"
+    "packages/shared/src/database.types.ts",
+    "apps/web/next-env.d.ts",
+    "apps/web/.next",
+    "apps/worker/worker-configuration.d.ts"
   ]
 }

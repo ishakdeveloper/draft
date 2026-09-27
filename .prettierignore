@@ -14,3 +14,5 @@ packages/shared/src/database.types.ts
 .agents
 skills-lock.json
 apps/worker/worker-configuration.d.ts
+apps/web/next-env.d.ts
+apps/web/.next

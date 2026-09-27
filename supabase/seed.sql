@@ -3,11 +3,14 @@
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token,
+  email_change, email_change_token_new
 ) values (
   '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
   'reviewer@example.com', extensions.crypt('reviewer-password', extensions.gen_salt('bf')), now(),
-  '{"provider":"email","providers":["email"]}', '{"name":"Sam Reviewer"}', now(), now(), '', ''
+  '{"provider":"email","providers":["email"]}', '{"name":"Sam Reviewer"}', now(), now(), '', '',
+  -- GoTrue fails sign-in with "Database error querying schema" when these are NULL.
+  '', ''
 );
 insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
 values (
@@ -58,3 +61,40 @@ insert into public.pipeline_events (brand_id, product_id, draft_id, step, status
 ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'ingest', 'ok', 120, '{"action":"draft_created","version":1}'),
 ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'generate', 'ok', 8400, '{"model":"seed"}'),
 ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'publish.complete', 'ok', 900, '{}');
+
+-- Two drafts awaiting review: one in a brand the reviewer belongs to, one they must not see.
+insert into public.products (id, brand_id, shopify_product_id, shopify_gid, handle, title, body_html, vendor, product_type, tags, status, shopify_updated_at, source_hash, raw) values
+(
+  '20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 9000000000101, 'gid://shopify/Product/9000000000101',
+  'oat-milk-cleanser', 'Oat Milk Cleanser', '<p>cleanser. colloidal oat, glycerin, 200ml pump. ph 5.5. no fragrance</p>',
+  'Nordkind Skin', 'Cleanser', '{seed,face}', 'active', now() - interval '3 hours',
+  'seed-source-hash-0002',
+  '{"id":9000000000101,"title":"Oat Milk Cleanser","vendor":"Nordkind Skin"}'
+),
+(
+  '20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 9000000000102, 'gid://shopify/Product/9000000000102',
+  'evening-ritual-bath-salts', 'Evening Bath Salts', '<p>bath salts. magnesium flakes, lavender oil. 500g jar</p>',
+  'Velora Wellness', 'Bath', '{seed,bath}', 'active', now() - interval '2 hours',
+  'seed-source-hash-0003',
+  '{"id":9000000000102,"title":"Evening Bath Salts","vendor":"Velora Wellness"}'
+);
+
+insert into public.listing_drafts (id, brand_id, product_id, version, status, source_hash, source_title, source_body_html, content, translations, model, created_at) values
+(
+  '30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 1, 'pending_review',
+  'seed-source-hash-0002', 'Oat Milk Cleanser', '<p>cleanser. colloidal oat, glycerin, 200ml pump. ph 5.5. no fragrance</p>',
+  '{"title":"Oat Milk Cleanser","description_html":"<p>a gentle daily cleanser. colloidal oat calms, glycerin keeps skin from feeling tight after rinsing.</p><p>pH 5.5. no fragrance. 200 ml pump.</p>","bullets":["Colloidal oat for sensitive skin","Glycerin against post-wash tightness","pH 5.5, fragrance free","200 ml pump bottle"],"seo_title":"Oat Milk Cleanser, pH 5.5 and Fragrance Free","seo_description":"A gentle daily face cleanser with colloidal oat and glycerin. pH 5.5, no fragrance, 200 ml pump."}',
+  '{}', 'seed', now() - interval '3 hours'
+),
+(
+  '30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', 1, 'pending_review',
+  'seed-source-hash-0003', 'Evening Bath Salts', '<p>bath salts. magnesium flakes, lavender oil. 500g jar</p>',
+  '{"title":"Evening Ritual Bath Salts","description_html":"<p>Draw a warm bath and let the day go. Magnesium flakes and lavender oil for a slower evening.</p>","bullets":["Magnesium flakes","Lavender essential oil","500 g glass jar"],"seo_title":"Evening Ritual Bath Salts with Magnesium","seo_description":"Magnesium bath flakes with lavender oil for a calm evening routine. 500 g jar."}',
+  '{}', 'seed', now() - interval '2 hours'
+);
+
+insert into public.pipeline_events (brand_id, product_id, draft_id, step, status, duration_ms, detail) values
+('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'ingest', 'ok', 140, '{"action":"draft_created","version":1}'),
+('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'generate', 'ok', 7900, '{"model":"seed"}'),
+('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'ingest', 'ok', 150, '{"action":"draft_created","version":1}'),
+('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'generate', 'ok', 8200, '{"model":"seed"}');
