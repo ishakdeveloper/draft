@@ -55,3 +55,29 @@ export function generateUserPrompt(product: ProductFacts): string {
     product.body_html || "(empty)",
   ].join("\n");
 }
+
+/** Stable prefix for translation: rules, then the brand voice. The listing goes in the user message. */
+export function translateSystemPrompt(brand: BrandVoice, locales: readonly string[]): string {
+  return [
+    "You adapt product listings for an online beauty and wellness store into other languages.",
+    "Write each version as a native copywriter would for that market. Adapt, do not translate word for word.",
+    "Keep every fact exactly: ingredients, percentages, sizes, units and numbers do not change.",
+    "Add nothing that is not in the source. Make no medical or therapeutic claims.",
+    "Keep the HTML structure of description_html and use only <p>, <ul>, <li>, <strong> and <em>.",
+    "Keep the same number of bullets. seo_title is at most 60 characters, seo_description at most 155.",
+    "Keep the brand name unchanged. Keep the brand voice below in every language.",
+    "",
+    `Brand: ${brand.name}`,
+    `Voice: ${brand.tone_guide}`,
+    `Source language: ${localeName(brand.default_locale)}`,
+    `Target languages: ${locales.map((l) => `${l} (${localeName(l)})`).join(", ")}`,
+  ].join("\n");
+}
+
+export function translateUserPrompt(content: object): string {
+  return [
+    "Adapt this listing into every target language.",
+    "",
+    JSON.stringify(content, null, 2),
+  ].join("\n");
+}

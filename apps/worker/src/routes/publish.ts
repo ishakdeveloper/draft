@@ -1,9 +1,15 @@
-import { contentHash, ListingContentSchema } from "@draft/shared";
+import { contentHash, ListingContentSchema, TranslationsSchema } from "@draft/shared";
 import { Hono } from "hono";
 import type { AppContext } from "../app";
 import { AppError } from "../lib/errors";
 import { StepRecorder } from "../lib/events";
 import { PRODUCT_UPDATE, getAccessToken, shopifyGraphql } from "../lib/shopify";
+import {
+  TRANSLATABLE_QUERY,
+  TRANSLATIONS_REGISTER,
+  buildTranslationInputs,
+  type TranslatableContent,
+} from "../lib/shopify-translations";
 
 interface ProductUpdateData {
   productUpdate: {
@@ -24,7 +30,7 @@ export const publishRoute = new Hono<AppContext>().post("/drafts/:id/publish", a
   const { data: draft, error } = await db
     .from("listing_drafts")
     .select(
-      "id, brand_id, product_id, status, content, brand:brands(id, shopify_domain), product:products(shopify_gid)",
+      "id, brand_id, product_id, status, content, translations, brand:brands(id, shopify_domain), product:products(shopify_gid)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -88,6 +94,65 @@ export const publishRoute = new Hono<AppContext>().post("/drafts/:id/publish", a
         userErrors.map((e) => e.message).join("; ") || "no product returned",
         userErrors,
       );
+    }
+
+    // Translations are best effort: the listing is already live, so a failure here is recorded
+    // as its own step instead of failing the publish.
+    const translations = TranslationsSchema.safeParse(draft.translations);
+    if (translations.success && Object.keys(translations.data).length > 0) {
+      const tRecorder = new StepRecorder(db, "publish.translations", {
+        brand_id: draft.brand_id,
+        product_id: draft.product_id,
+        draft_id: draft.id,
+      });
+      try {
+        const { data: tData } = await shopifyGraphql<{
+          shopLocales: Array<{ locale: string }>;
+          translatableResource: { translatableContent: TranslatableContent[] } | null;
+        }>(
+          draft.brand.shopify_domain,
+          token,
+          shopify.apiVersion,
+          TRANSLATABLE_QUERY,
+          { id: draft.product.shopify_gid },
+          fetchImpl,
+        );
+        const { inputs, skippedLocales } = buildTranslationInputs(
+          translations.data as Record<string, typeof content>,
+          tData.translatableResource?.translatableContent ?? [],
+          tData.shopLocales.map((l) => l.locale),
+        );
+        let registered = 0;
+        let translationErrors: Array<{ message: string }> = [];
+        if (inputs.length > 0) {
+          const { data: rData } = await shopifyGraphql<{
+            translationsRegister: {
+              translations: unknown[] | null;
+              userErrors: Array<{ message: string }>;
+            };
+          }>(
+            draft.brand.shopify_domain,
+            token,
+            shopify.apiVersion,
+            TRANSLATIONS_REGISTER,
+            { id: draft.product.shopify_gid, translations: inputs },
+            fetchImpl,
+          );
+          registered = rData.translationsRegister.translations?.length ?? 0;
+          translationErrors = rData.translationsRegister.userErrors;
+        }
+        const detail = {
+          registered,
+          skipped_locales: skippedLocales,
+          errors: translationErrors.map((e) => e.message),
+        };
+        const status = translationErrors.length > 0 ? "error" : registered === 0 ? "skipped" : "ok";
+        await tRecorder.finish(status, detail);
+      } catch (err) {
+        await tRecorder.finish("error", {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
 
     const { error: doneError } = await db

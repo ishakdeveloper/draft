@@ -9,6 +9,7 @@ import { generateRoute } from "./routes/generate";
 import { failRoute } from "./routes/fail";
 import { oauthRoute } from "./routes/oauth";
 import { publishRoute } from "./routes/publish";
+import { translateRoute } from "./routes/translate";
 import { shopifyAdminRoute } from "./routes/shopify-admin";
 import { shopifyWebhookRoute } from "./routes/shopify-webhook";
 import type { FetchLike, ShopifySettings } from "./lib/shopify";
@@ -74,6 +75,7 @@ export function createApp(makeDeps: (c: { env: unknown }) => Deps): Hono<AppCont
   });
   v1.route("/", ingestRoute);
   v1.route("/", generateRoute);
+  v1.route("/", translateRoute);
   v1.route("/", failRoute);
   v1.route("/", publishRoute);
   v1.route("/", shopifyAdminRoute);

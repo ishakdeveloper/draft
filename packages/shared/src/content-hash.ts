@@ -1,6 +1,13 @@
-/** Collapse whitespace differences so a hash survives Shopify's payload formatting. */
+/**
+ * Make a value comparable across Shopify's formatting. Shopify re-serialises HTML on save
+ * (it puts line breaks between list tags, for example), so whitespace next to a tag is
+ * dropped and every other run of whitespace becomes one space.
+ */
 export function normalizeText(value: string | null | undefined): string {
-  return (value ?? "").replace(/\r\n/g, "\n").replace(/\s+/g, " ").trim();
+  return (value ?? "")
+    .replace(/\s*(<[^>]+>)\s*/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function sha256Hex(input: string): Promise<string> {

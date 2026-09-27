@@ -163,6 +163,57 @@
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Translate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "position": [1200, -200],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/translate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "Record translate failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [1440, -120],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/fail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: 'translate', message: String($json.error?.message ?? 'translate failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
     }
   ],
   "connections": {
@@ -219,10 +270,28 @@
     },
     "Generate": {
       "main": [
-        [],
+        [
+          {
+            "node": "Translate",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Mark failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Record translate failure",
             "type": "main",
             "index": 0
           }

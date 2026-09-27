@@ -2,23 +2,28 @@
   "name": "02 Approved draft to Shopify",
   "nodes": [
     {
+      "id": "b2000000-0000-4000-8000-000000000001",
+      "name": "Approval webhook",
+      "webhookId": "draft-approved",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
       "parameters": {
         "httpMethod": "POST",
         "path": "draft-approved",
         "authentication": "headerAuth",
         "options": {}
       },
-      "id": "b2000000-0000-4000-8000-000000000001",
-      "name": "Approval webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [0, 0],
-      "webhookId": "draft-approved",
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft approval secret}}"
       }
     },
     {
+      "id": "b2000000-0000-4000-8000-000000000002",
+      "name": "Newly approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [240, 0],
       "parameters": {
         "conditions": {
           "options": {
@@ -50,14 +55,18 @@
           "combinator": "and"
         },
         "options": {}
-      },
-      "id": "b2000000-0000-4000-8000-000000000002",
-      "name": "Newly approved?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [240, 0]
+      }
     },
     {
+      "id": "b2000000-0000-4000-8000-000000000003",
+      "name": "Publish to Shopify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
+      "position": [480, -100],
       "parameters": {
         "method": "POST",
         "url": "=${WORKER_URL}/v1/drafts/{{ $json.body.record.id }}/publish",
@@ -70,28 +79,27 @@
           "timeout": 60000
         }
       },
-      "id": "b2000000-0000-4000-8000-000000000003",
-      "name": "Publish to Shopify",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [480, -100],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 3000,
-      "onError": "continueErrorOutput",
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
     },
     {
-      "parameters": {},
       "id": "b2000000-0000-4000-8000-000000000004",
       "name": "Ignored",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [480, 140]
+      "position": [480, 140],
+      "parameters": {}
     },
     {
+      "id": "b2000000-0000-4000-8000-000000000005",
+      "name": "Mark failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [720, 20],
       "parameters": {
         "method": "POST",
         "url": "=${WORKER_URL}/v1/drafts/{{ $('Approval webhook').item.json.body.record.id }}/fail",
@@ -104,14 +112,6 @@
           "timeout": 30000
         }
       },
-      "id": "b2000000-0000-4000-8000-000000000005",
-      "name": "Mark failed",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [720, 20],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
@@ -161,10 +161,10 @@
     }
   },
   "settings": {
-    "executionOrder": "v1",
     "saveManualExecutions": true,
-    "saveDataSuccessExecution": "all",
     "saveDataErrorExecution": "all",
-    "executionTimeout": 300
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 300,
+    "executionOrder": "v1"
   }
 }

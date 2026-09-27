@@ -279,6 +279,17 @@ export function DraftReview({
                           <li key={b}>{b}</li>
                         ))}
                       </ul>
+                      <dl className="grid gap-1 border-t pt-3 text-xs">
+                        <dt className="text-muted-foreground">SEO title</dt>
+                        <dd>{t.seo_title}</dd>
+                        <dt className="mt-2 text-muted-foreground">SEO description</dt>
+                        <dd>{t.seo_description}</dd>
+                      </dl>
+                      <p className="text-xs text-muted-foreground">
+                        Adapted from the {LOCALE_LABEL[defaultLocale] ?? defaultLocale} listing when
+                        it was written. Edits to the {LOCALE_LABEL[defaultLocale] ?? defaultLocale}{" "}
+                        text above are not re-translated.
+                      </p>
                     </>
                   ) : (
                     <p className="text-muted-foreground">
