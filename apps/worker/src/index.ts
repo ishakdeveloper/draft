@@ -2,6 +2,7 @@ import { createApp, type Deps } from "./app";
 import { readConfig, type WorkerEnv } from "./env";
 import { createServiceClient } from "./lib/supabase";
 import { ClaudeListingGenerator } from "./lib/generator";
+import { createImageProvider } from "./lib/image";
 
 function depsFromEnv({ env }: { env: unknown }): Deps {
   const config = readConfig(env as WorkerEnv);
@@ -17,6 +18,8 @@ function depsFromEnv({ env }: { env: unknown }): Deps {
     },
     productForward: { url: config.productWebhookUrl, secret: config.replaySecret },
     fetchImpl: (input, init) => fetch(input, init),
+    images: createImageProvider(config.imageProvider, config.ai),
+    imageDailyLimit: config.imageDailyLimit,
   };
 }
 

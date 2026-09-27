@@ -13,6 +13,8 @@ import { translateRoute } from "./routes/translate";
 import { shopifyAdminRoute } from "./routes/shopify-admin";
 import { shopifyWebhookRoute } from "./routes/shopify-webhook";
 import type { FetchLike, ShopifySettings } from "./lib/shopify";
+import type { ImageProvider } from "./lib/image";
+import { imageRoute } from "./routes/image";
 
 /** Everything a request handler needs. Built from env per request in index.ts, or faked in tests. */
 export interface Deps {
@@ -24,6 +26,8 @@ export interface Deps {
   /** Where verified Shopify product webhooks are sent (the n8n workflow). */
   productForward: { url: string; secret: string | null };
   fetchImpl: FetchLike;
+  images: ImageProvider;
+  imageDailyLimit: number;
 }
 
 export type AppContext = { Variables: { deps: Deps; requestId: string } };
@@ -76,6 +80,7 @@ export function createApp(makeDeps: (c: { env: unknown }) => Deps): Hono<AppCont
   v1.route("/", ingestRoute);
   v1.route("/", generateRoute);
   v1.route("/", translateRoute);
+  v1.route("/", imageRoute);
   v1.route("/", failRoute);
   v1.route("/", publishRoute);
   v1.route("/", shopifyAdminRoute);

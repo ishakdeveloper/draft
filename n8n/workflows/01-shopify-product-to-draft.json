@@ -214,6 +214,57 @@
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000010",
+      "name": "Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
+      "position": [1200, -360],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    },
+    {
+      "id": "a1000000-0000-4000-8000-000000000011",
+      "name": "Record image failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "position": [1440, -300],
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/fail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: 'image', message: String($json.error?.message ?? 'image failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
     }
   ],
   "connections": {
@@ -275,6 +326,11 @@
             "node": "Translate",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Image",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -292,6 +348,18 @@
         [
           {
             "node": "Record translate failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Record image failure",
             "type": "main",
             "index": 0
           }
