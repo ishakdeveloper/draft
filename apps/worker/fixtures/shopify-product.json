@@ -1,6 +1,6 @@
 {
   "topic": "products/update",
-  "shop_domain": "draft-demo.myshopify.com",
+  "shop_domain": "draft-0qsy4tb3.myshopify.com",
   "product": {
     "id": 9000000000002,
     "admin_graphql_api_id": "gid://shopify/Product/9000000000002",

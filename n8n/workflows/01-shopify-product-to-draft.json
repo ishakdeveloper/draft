@@ -30,7 +30,7 @@
             {
               "id": "b1000000-0000-4000-8000-000000000001",
               "name": "shop_domain",
-              "value": "={{ $json.body?.shop_domain ?? $json.shop_domain ?? 'draft-demo.myshopify.com' }}",
+              "value": "={{ $json.body?.shop_domain ?? $json.shop_domain ?? 'draft-0qsy4tb3.myshopify.com' }}",
               "type": "string"
             },
             {

@@ -19,7 +19,8 @@ person approving it.
 
 ## Flow
 
-1. Shopify fires `products/create` or `products/update` to n8n.
+1. Shopify fires `products/create` or `products/update` to the worker, which verifies the
+   HMAC signature and hands the event to n8n.
 2. n8n calls the worker's ingest route. The worker maps the product's vendor to a
    brand and hashes title and body. Echoes of its own publish and edits that do not
    change the copy are skipped and logged.
@@ -28,8 +29,14 @@ person approving it.
 4. A reviewer sees the draft appear in the web app, edits it, and approves or
    rejects it. Row level security scopes everything to the reviewer's brands; a
    database trigger allows only the approve and reject transitions from a user.
-5. Approval fires a database webhook to n8n, which asks the worker for the publish
-   payload, updates the Shopify product, and marks the draft published.
+5. Approval fires a database webhook to n8n, which calls the worker's publish route. The
+   worker records the publish hash, updates the Shopify product (title, description, SEO)
+   and marks the draft published. The `products/update` webhook caused by that write is
+   recognised by the hash and skipped.
+
+The worker owns the Shopify connection. The app uses the client-credentials grant, whose
+tokens last 24 hours, so the worker fetches them on demand and caches them in
+`brand_secrets`, which only the service role can read. n8n never holds a Shopify token.
 
 ## Development
 

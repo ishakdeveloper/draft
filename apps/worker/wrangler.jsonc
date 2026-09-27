@@ -14,11 +14,12 @@
   "ai": { "binding": "AI" },
   "vars": {
     "APP_VERSION": "0.1.0",
-    "SHOPIFY_API_VERSION": "2025-07",
+    "SHOPIFY_API_VERSION": "2026-07",
+    "N8N_PRODUCT_WEBHOOK_URL": "https://n8n-production-1157c.up.railway.app/webhook/replay-product",
     "CLAUDE_MODEL": "claude-opus-5",
     "IMAGE_PROVIDER": "workers-ai",
     "IMAGE_DAILY_LIMIT": "40",
   },
   // Secrets (wrangler secret put): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY,
-  // PIPELINE_SECRET, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET. Locally they live in .dev.vars.
+  // PIPELINE_SECRET, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, REPLAY_SECRET. Locally they live in .dev.vars.
 }

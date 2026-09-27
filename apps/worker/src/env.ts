@@ -10,6 +10,8 @@ export type Secrets = Record<SecretName, string> & {
   ANTHROPIC_API_KEY?: string;
   SHOPIFY_CLIENT_ID?: string;
   SHOPIFY_CLIENT_SECRET?: string;
+  /** Header secret n8n expects on its product webhook. */
+  REPLAY_SECRET?: string;
 };
 
 export type WorkerEnv = Env & Secrets;
@@ -25,6 +27,10 @@ export interface Config {
   imageProvider: string;
   imageDailyLimit: number;
   ai: Ai;
+  shopifyClientId: string | null;
+  shopifyClientSecret: string | null;
+  productWebhookUrl: string;
+  replaySecret: string | null;
 }
 
 export class MissingSecretError extends Error {
@@ -47,5 +53,9 @@ export function readConfig(env: WorkerEnv): Config {
     imageProvider: env.IMAGE_PROVIDER,
     imageDailyLimit: Number(env.IMAGE_DAILY_LIMIT) || 40,
     ai: env.AI,
+    shopifyClientId: env.SHOPIFY_CLIENT_ID ?? null,
+    shopifyClientSecret: env.SHOPIFY_CLIENT_SECRET ?? null,
+    productWebhookUrl: env.N8N_PRODUCT_WEBHOOK_URL,
+    replaySecret: env.REPLAY_SECRET ?? null,
   };
 }

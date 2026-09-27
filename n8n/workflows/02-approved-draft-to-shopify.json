@@ -1,0 +1,170 @@
+{
+  "name": "02 Approved draft to Shopify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "draft-approved",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "b2000000-0000-4000-8000-000000000001",
+      "name": "Approval webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "draft-approved",
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft approval secret}}"
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c2000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.body.record.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "c2000000-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.body.old_record.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2000000-0000-4000-8000-000000000002",
+      "name": "Newly approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $json.body.record.id }}/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b2000000-0000-4000-8000-000000000003",
+      "name": "Publish to Shopify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, -100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    },
+    {
+      "parameters": {},
+      "id": "b2000000-0000-4000-8000-000000000004",
+      "name": "Ignored",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [480, 140]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Approval webhook').item.json.body.record.id }}/fail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: 'publish', message: String($json.error?.message ?? 'publish failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b2000000-0000-4000-8000-000000000005",
+      "name": "Mark failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 20],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
+      }
+    }
+  ],
+  "connections": {
+    "Approval webhook": {
+      "main": [
+        [
+          {
+            "node": "Newly approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newly approved?": {
+      "main": [
+        [
+          {
+            "node": "Publish to Shopify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish to Shopify": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Mark failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "executionTimeout": 300
+  }
+}

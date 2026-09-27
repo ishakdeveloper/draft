@@ -8,6 +8,10 @@ import { ingestRoute } from "./routes/ingest";
 import { generateRoute } from "./routes/generate";
 import { failRoute } from "./routes/fail";
 import { oauthRoute } from "./routes/oauth";
+import { publishRoute } from "./routes/publish";
+import { shopifyAdminRoute } from "./routes/shopify-admin";
+import { shopifyWebhookRoute } from "./routes/shopify-webhook";
+import type { FetchLike, ShopifySettings } from "./lib/shopify";
 
 /** Everything a request handler needs. Built from env per request in index.ts, or faked in tests. */
 export interface Deps {
@@ -15,6 +19,10 @@ export interface Deps {
   generator: ListingGenerator;
   pipelineSecret: string;
   appVersion: string;
+  shopify: ShopifySettings;
+  /** Where verified Shopify product webhooks are sent (the n8n workflow). */
+  productForward: { url: string; secret: string | null };
+  fetchImpl: FetchLike;
 }
 
 export type AppContext = { Variables: { deps: Deps; requestId: string } };
@@ -40,20 +48,35 @@ export function createApp(makeDeps: (c: { env: unknown }) => Deps): Hono<AppCont
   app.route("/", healthRoute);
   app.route("/", oauthRoute);
 
-  const v1 = new Hono<AppContext>();
-  v1.use("*", async (c, next) => {
-    let deps: Deps;
+  const withDeps = async (c: { env: unknown; set: (key: "deps", value: Deps) => void }) => {
     try {
-      deps = makeDeps({ env: c.env });
+      const deps = makeDeps({ env: c.env });
+      c.set("deps", deps);
+      return deps;
     } catch (err) {
       throw new AppError("config", err instanceof Error ? err.message : String(err));
     }
-    c.set("deps", deps);
+  };
+
+  // Shopify authenticates with an HMAC signature, not the pipeline secret.
+  const hooks = new Hono<AppContext>();
+  hooks.use("*", async (c, next) => {
+    await withDeps(c);
+    await next();
+  });
+  hooks.route("/", shopifyWebhookRoute);
+  app.route("/", hooks);
+
+  const v1 = new Hono<AppContext>();
+  v1.use("*", async (c, next) => {
+    const deps = await withDeps(c);
     await requirePipelineSecret(deps.pipelineSecret)(c, next);
   });
   v1.route("/", ingestRoute);
   v1.route("/", generateRoute);
   v1.route("/", failRoute);
+  v1.route("/", publishRoute);
+  v1.route("/", shopifyAdminRoute);
   app.route("/v1", v1);
 
   return app;

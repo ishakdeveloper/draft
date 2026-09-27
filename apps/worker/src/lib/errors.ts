@@ -6,6 +6,7 @@ export type ErrorCode =
   | "invalid_transition"
   | "llm_failed"
   | "storage_failed"
+  | "shopify_failed"
   | "database"
   | "config"
   | "internal";
@@ -18,6 +19,7 @@ const STATUS: Record<ErrorCode, number> = {
   invalid_transition: 409,
   llm_failed: 502,
   storage_failed: 502,
+  shopify_failed: 502,
   database: 500,
   config: 500,
   internal: 500,

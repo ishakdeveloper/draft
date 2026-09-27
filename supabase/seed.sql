@@ -20,17 +20,17 @@ values (
 
 insert into public.brands (id, slug, name, shopify_domain, shopify_vendor, default_locale, target_locales, tone_guide, visual_notes) values
 (
-  '10000000-0000-0000-0000-000000000001', 'lumiere-botanica', 'Lumière Botanica', 'draft-demo.myshopify.com', 'Lumière Botanica', 'en', '{de,nl,fr}',
+  '10000000-0000-0000-0000-000000000001', 'lumiere-botanica', 'Lumière Botanica', 'draft-0qsy4tb3.myshopify.com', 'Lumière Botanica', 'en', '{de,nl,fr}',
   'Calm, botanical, quietly luxurious. Speak to a reader who reads ingredient lists. Short sentences. Never promise medical results. No exclamation marks.',
   'Soft daylight, linen textures, muted greens and warm off-white, a single plant shadow.'
 ),
 (
-  '10000000-0000-0000-0000-000000000002', 'nordkind-skin', 'Nordkind Skin', 'draft-demo.myshopify.com', 'Nordkind Skin', 'en', '{de,nl,fr}',
+  '10000000-0000-0000-0000-000000000002', 'nordkind-skin', 'Nordkind Skin', 'draft-0qsy4tb3.myshopify.com', 'Nordkind Skin', 'en', '{de,nl,fr}',
   'Direct, minimal, Scandinavian. Facts before feelings. Lead with the one thing the product does. Lowercase feel, but correct grammar.',
   'Cool grey light, concrete or birch surfaces, a lot of negative space, one bold accent colour.'
 ),
 (
-  '10000000-0000-0000-0000-000000000003', 'velora-wellness', 'Velora Wellness', 'draft-demo.myshopify.com', 'Velora Wellness', 'en', '{de,nl,fr}',
+  '10000000-0000-0000-0000-000000000003', 'velora-wellness', 'Velora Wellness', 'draft-0qsy4tb3.myshopify.com', 'Velora Wellness', 'en', '{de,nl,fr}',
   'Warm, encouraging, ritual-minded. Talk about routines and moments, not miracles. Friendly, never cute.',
   'Golden hour, terracotta and sand tones, steam, hands holding the product.'
 );

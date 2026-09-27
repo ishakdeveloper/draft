@@ -10,6 +10,13 @@ function depsFromEnv({ env }: { env: unknown }): Deps {
     generator: new ClaudeListingGenerator(config.anthropicApiKey, config.claudeModel),
     pipelineSecret: config.pipelineSecret,
     appVersion: config.appVersion,
+    shopify: {
+      clientId: config.shopifyClientId,
+      clientSecret: config.shopifyClientSecret,
+      apiVersion: config.shopifyApiVersion,
+    },
+    productForward: { url: config.productWebhookUrl, secret: config.replaySecret },
+    fetchImpl: (input, init) => fetch(input, init),
   };
 }
 

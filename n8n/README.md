@@ -24,9 +24,9 @@ Root `.env` (gitignored) also needs `N8N_BASE_URL` and `N8N_API_KEY` (n8n Settin
 
 ## Workflows
 
-**01 Shopify product to draft.** Entry points: the Shopify triggers (`products/create`,
-`products/update`) and a `POST /webhook/replay-product` webhook that accepts the same
-`{ topic, shop_domain, product }` body the Worker takes, for replaying a captured payload.
+**01 Shopify product to draft.** Entry point: `POST /webhook/replay-product` with
+`{ topic, shop_domain, product }`. The Worker posts here after verifying a Shopify
+`products/create` or `products/update` webhook; the same endpoint replays a captured payload.
 Steps: normalize the payload, call the Worker's ingest route, branch on `draft_created`, then
 generate. Every HTTP node has a timeout and retries; the generate node's error output calls the
 Worker's fail route so a draft never stays stuck in `drafting`.
@@ -37,6 +37,27 @@ Replay a payload:
 curl -X POST "$N8N_BASE_URL/webhook/replay-product" \
   -H "x-replay-secret: $REPLAY_SECRET" -H 'content-type: application/json' \
   --data @apps/worker/fixtures/shopify-product.json
+```
+
+**02 Approved draft to Shopify.** Entry point: `POST /webhook/draft-approved`, called by the
+`private.notify_draft_approved()` trigger through pg_net when a reviewer approves. It checks the
+status really changed to `approved`, calls the Worker's publish route with retries, and marks
+the draft failed if publishing gives up. pg_net does not retry, so the Worker route is safe to
+call again by hand:
+
+```sh
+curl -X POST "$WORKER_URL/v1/drafts/<draft id>/publish" -H "x-pipeline-secret: $PIPELINE_SECRET"
+```
+
+## Shopify setup
+
+The store's product webhooks point at the Worker (`/shopify/webhooks`), not at n8n. Register
+them once, or again after changing the Worker URL:
+
+```sh
+curl -X POST "$WORKER_URL/v1/shopify/webhooks/register" -H "x-pipeline-secret: $PIPELINE_SECRET" \
+  -H 'content-type: application/json' \
+  -d '{"shop_domain":"<store>.myshopify.com","callback_url":"'$WORKER_URL'/shopify/webhooks"}'
 ```
 
 ## Instance settings
