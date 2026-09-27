@@ -9,6 +9,7 @@ import { generateRoute } from "./routes/generate";
 import { failRoute } from "./routes/fail";
 import { oauthRoute } from "./routes/oauth";
 import { publishRoute } from "./routes/publish";
+import { publishImageRoute } from "./routes/publish-image";
 import { translateRoute } from "./routes/translate";
 import { shopifyAdminRoute } from "./routes/shopify-admin";
 import { shopifyWebhookRoute } from "./routes/shopify-webhook";
@@ -83,6 +84,7 @@ export function createApp(makeDeps: (c: { env: unknown }) => Deps): Hono<AppCont
   v1.route("/", imageRoute);
   v1.route("/", failRoute);
   v1.route("/", publishRoute);
+  v1.route("/", publishImageRoute);
   v1.route("/", shopifyAdminRoute);
   app.route("/v1", v1);
 

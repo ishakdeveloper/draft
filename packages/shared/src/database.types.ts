@@ -133,6 +133,8 @@ export type Database = {
           published_at: string | null
           rejected_at: string | null
           review_note: string | null
+          shopify_media_id: string | null
+          shopify_media_path: string | null
           reviewer_id: string | null
           source_body_html: string
           source_hash: string
@@ -157,6 +159,8 @@ export type Database = {
           published_at?: string | null
           rejected_at?: string | null
           review_note?: string | null
+          shopify_media_id?: string | null
+          shopify_media_path?: string | null
           reviewer_id?: string | null
           source_body_html?: string
           source_hash: string
@@ -181,6 +185,8 @@ export type Database = {
           published_at?: string | null
           rejected_at?: string | null
           review_note?: string | null
+          shopify_media_id?: string | null
+          shopify_media_path?: string | null
           reviewer_id?: string | null
           source_body_html?: string
           source_hash?: string

@@ -4,6 +4,7 @@ import type { AppContext } from "../app";
 import { AppError } from "../lib/errors";
 import { StepRecorder } from "../lib/events";
 import { PRODUCT_UPDATE, getAccessToken, shopifyGraphql } from "../lib/shopify";
+import { syncHeroImage } from "../lib/shopify-media";
 import {
   TRANSLATABLE_QUERY,
   TRANSLATIONS_REGISTER,
@@ -30,7 +31,7 @@ export const publishRoute = new Hono<AppContext>().post("/drafts/:id/publish", a
   const { data: draft, error } = await db
     .from("listing_drafts")
     .select(
-      "id, brand_id, product_id, status, content, translations, brand:brands(id, shopify_domain), product:products(shopify_gid)",
+      "id, brand_id, product_id, status, content, translations, image_path, shopify_media_id, shopify_media_path, brand:brands(id, shopify_domain), product:products(shopify_gid)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -150,6 +151,37 @@ export const publishRoute = new Hono<AppContext>().post("/drafts/:id/publish", a
         await tRecorder.finish(status, detail);
       } catch (err) {
         await tRecorder.finish("error", {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // The hero image is best effort too: recorded as its own step, never fails the publish.
+    if (draft.image_path) {
+      const iRecorder = new StepRecorder(db, "publish.image", {
+        brand_id: draft.brand_id,
+        product_id: draft.product_id,
+        draft_id: draft.id,
+      });
+      try {
+        const result = await syncHeroImage({
+          db,
+          shopify,
+          fetchImpl,
+          token,
+          shop: draft.brand.shopify_domain,
+          draft: {
+            id: draft.id,
+            image_path: draft.image_path,
+            shopify_media_id: draft.shopify_media_id,
+            shopify_media_path: draft.shopify_media_path,
+            product_gid: draft.product.shopify_gid,
+            alt: content.title,
+          },
+        });
+        await iRecorder.finish(result.action === "upload" ? "ok" : "skipped", result);
+      } catch (err) {
+        await iRecorder.finish("error", {
           message: err instanceof Error ? err.message : String(err),
         });
       }

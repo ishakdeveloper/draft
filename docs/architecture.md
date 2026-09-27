@@ -15,7 +15,7 @@ flowchart LR
   web -- "7 approve (RLS)" --> sb
   sb -- "8 pg_net approval webhook" --> n8n
   n8n -- "9 publish" --> worker
-  worker -- "10 productUpdate, translationsRegister" --> shop
+  worker -- "10 listing, translations, hero image" --> shop
 ```
 
 ## Responsibilities
@@ -95,7 +95,7 @@ expiry. n8n never holds a store token. Webhooks are registered by the Worker
   about 7 seconds per product.
 - Editing the default-language text does not re-translate; translations are made when the
   listing is written.
-- Hero images stay in the review app; they are not uploaded to Shopify on publish.
+- Replacing a hero image in Shopify needs the `write_files` scope to delete the previous one.
 - pg_net does not retry the approval webhook. A missed publish can be re-run by calling the
   publish route (see the runbook).
 - One store, three brands mapped by vendor. Multi-store would move the domain from `brands`

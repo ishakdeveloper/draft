@@ -30,8 +30,8 @@ person approving it.
    rejects it. Row level security scopes everything to the reviewer's brands; a
    database trigger allows only the approve and reject transitions from a user.
 5. Approval fires a database webhook to n8n, which calls the worker's publish route. The
-   worker records the publish hash, updates the Shopify product (title, description, SEO)
-   and marks the draft published. The `products/update` webhook caused by that write is
+   worker records the publish hash, updates the Shopify product (title, description, SEO,
+   translations and hero image) and marks the draft published. The `products/update` webhook caused by that write is
    recognised by the hash and skipped.
 
 The worker owns the Shopify connection. The app uses the client-credentials grant, whose

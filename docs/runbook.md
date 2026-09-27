@@ -43,6 +43,13 @@ Publish an approved draft whose approval webhook was lost:
 curl -X POST "$WORKER_URL/v1/drafts/<id>/publish" -H "x-pipeline-secret: $PIPELINE_SECRET"
 ```
 
+Attach (or re-attach) the hero image of an approved or published draft to its Shopify product.
+An image that is already attached is skipped:
+
+```sh
+curl -X POST "$WORKER_URL/v1/drafts/<id>/publish/image" -H "x-pipeline-secret: $PIPELINE_SECRET"
+```
+
 Replay a product event without touching Shopify:
 
 ```sh
@@ -66,6 +73,14 @@ curl -X POST "$WORKER_URL/v1/shopify/webhooks/register" -H "x-pipeline-secret: $
 2. n8n Executions for the workflow: node-by-node input, output and timing.
 3. Worker logs (Cloudflare dashboard, Observability): structured JSON per request.
 4. For publishes: `net._http_response` shows whether the approval webhook reached n8n.
+
+## Shopify app scopes
+
+`read_products, write_products, read_translations, write_translations, read_locales, write_files`.
+`write_files` lets the Worker remove a hero image it replaced; without it the new image is still
+attached and the old one stays, logged as `replace_error` on the `publish.image` event. After
+changing scopes, release a new app version and clear the cached token
+(`update brand_secrets set token_expires_at = now()`), so the next call fetches one with the new scopes.
 
 ## Rotating a secret
 
