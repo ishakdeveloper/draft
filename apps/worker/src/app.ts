@@ -11,6 +11,7 @@ import { oauthRoute } from "./routes/oauth";
 import { publishRoute } from "./routes/publish";
 import { publishImageRoute } from "./routes/publish-image";
 import { translateRoute } from "./routes/translate";
+import { enrichRoute } from "./routes/enrich";
 import { shopifyAdminRoute } from "./routes/shopify-admin";
 import { shopifyWebhookRoute } from "./routes/shopify-webhook";
 import type { FetchLike, ShopifySettings } from "./lib/shopify";
@@ -82,6 +83,7 @@ export function createApp(makeDeps: (c: { env: unknown }) => Deps): Hono<AppCont
   v1.route("/", generateRoute);
   v1.route("/", translateRoute);
   v1.route("/", imageRoute);
+  v1.route("/", enrichRoute);
   v1.route("/", failRoute);
   v1.route("/", publishRoute);
   v1.route("/", publishImageRoute);

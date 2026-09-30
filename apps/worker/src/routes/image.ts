@@ -1,11 +1,16 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppContext } from "../app";
+import type { AppContext, Deps } from "../app";
 import { AppError } from "../lib/errors";
 import { StepRecorder } from "../lib/events";
 import { heroImagePrompt } from "../lib/image";
 
 const BodySchema = z.object({ force: z.boolean().optional() }).default({});
+export type ImageBody = z.infer<typeof BodySchema>;
+
+export type ImageResult =
+  | { draft_id: string; skipped: true; reason: string; image_path?: string | null; limit?: number }
+  | { draft_id: string; image_path: string; model: string };
 
 export const BUCKET = "hero-images";
 
@@ -17,10 +22,9 @@ export function heroImagePath(brandId: string, draftId: string, generation: stri
   return `${brandId}/${draftId}/${generation}.jpg`;
 }
 
-export const imageRoute = new Hono<AppContext>().post("/drafts/:id/image", async (c) => {
-  const { db, images, imageDailyLimit } = c.get("deps");
-  const id = c.req.param("id");
-  const body = BodySchema.parse(await c.req.json().catch(() => ({})));
+/** The image step. Exported so the enrich route can run it beside the translate step. */
+export async function runImage(deps: Deps, id: string, body: ImageBody): Promise<ImageResult> {
+  const { db, images, imageDailyLimit } = deps;
 
   const { data: draft, error } = await db
     .from("listing_drafts")
@@ -52,7 +56,7 @@ export const imageRoute = new Hono<AppContext>().post("/drafts/:id/image", async
       image_path: draft.image_path,
     };
     await recorder.finish("skipped", result);
-    return c.json({ ...result, request_id: c.get("requestId") });
+    return result;
   }
 
   // Spend guard: a fixed number of generations per UTC day, counted from our own event log.
@@ -73,7 +77,7 @@ export const imageRoute = new Hono<AppContext>().post("/drafts/:id/image", async
       limit: imageDailyLimit,
     };
     await recorder.finish("skipped", result);
-    return c.json({ ...result, request_id: c.get("requestId") });
+    return result;
   }
 
   const prompt = heroImagePrompt(draft.product, draft.brand);
@@ -110,10 +114,11 @@ export const imageRoute = new Hono<AppContext>().post("/drafts/:id/image", async
   }
 
   await recorder.finish("ok", { model: image.model, bytes: image.bytes.byteLength });
-  return c.json({
-    draft_id: draft.id,
-    image_path: path,
-    model: image.model,
-    request_id: c.get("requestId"),
-  });
+  return { draft_id: draft.id, image_path: path, model: image.model };
+}
+
+export const imageRoute = new Hono<AppContext>().post("/drafts/:id/image", async (c) => {
+  const body = BodySchema.parse(await c.req.json().catch(() => ({})));
+  const result = await runImage(c.get("deps"), c.req.param("id"), body);
+  return c.json({ ...result, request_id: c.get("requestId") });
 });

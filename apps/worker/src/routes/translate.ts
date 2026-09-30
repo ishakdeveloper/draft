@@ -1,13 +1,18 @@
-import { ListingContentSchema, TranslationsSchema } from "@draft/shared";
+import { ListingContentSchema, TranslationsSchema, type Translations } from "@draft/shared";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppContext } from "../app";
+import type { AppContext, Deps } from "../app";
 import { AppError } from "../lib/errors";
 import { StepRecorder } from "../lib/events";
 
 const BodySchema = z
   .object({ locales: z.array(z.string().min(2)).optional(), force: z.boolean().optional() })
   .default({});
+export type TranslateBody = z.infer<typeof BodySchema>;
+
+export type TranslateResult =
+  | { draft_id: string; skipped: true; reason: string; locales: string[] }
+  | { draft_id: string; locales: string[]; translations: Translations };
 
 /** Locales still to translate: the brand's targets minus its own language minus what is already there. */
 export function pendingLocales(
@@ -21,10 +26,13 @@ export function pendingLocales(
   return force ? wanted : wanted.filter((l) => !existing.includes(l));
 }
 
-export const translateRoute = new Hono<AppContext>().post("/drafts/:id/translate", async (c) => {
-  const { db, generator } = c.get("deps");
-  const id = c.req.param("id");
-  const body = BodySchema.parse(await c.req.json().catch(() => ({})));
+/** The translate step. Exported so the enrich route can run it beside the image step. */
+export async function runTranslate(
+  deps: Deps,
+  id: string,
+  body: TranslateBody,
+): Promise<TranslateResult> {
+  const { db, generator } = deps;
 
   const { data: draft, error } = await db
     .from("listing_drafts")
@@ -66,7 +74,7 @@ export const translateRoute = new Hono<AppContext>().post("/drafts/:id/translate
       locales: Object.keys(current),
     };
     await recorder.finish("skipped", result);
-    return c.json({ ...result, request_id: c.get("requestId") });
+    return result;
   }
 
   let translated;
@@ -99,10 +107,11 @@ export const translateRoute = new Hono<AppContext>().post("/drafts/:id/translate
   }
 
   await recorder.finish("ok", { locales, model: translated.model, usage: translated.usage });
-  return c.json({
-    draft_id: draft.id,
-    locales,
-    translations: merged,
-    request_id: c.get("requestId"),
-  });
+  return { draft_id: draft.id, locales, translations: merged };
+}
+
+export const translateRoute = new Hono<AppContext>().post("/drafts/:id/translate", async (c) => {
+  const body = BodySchema.parse(await c.req.json().catch(() => ({})));
+  const result = await runTranslate(c.get("deps"), c.req.param("id"), body);
+  return c.json({ ...result, request_id: c.get("requestId") });
 });

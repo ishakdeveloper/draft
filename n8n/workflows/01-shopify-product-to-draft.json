@@ -165,18 +165,9 @@
       }
     },
     {
-      "id": "a1000000-0000-4000-8000-000000000008",
-      "name": "Translate",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "onError": "continueErrorOutput",
-      "position": [1200, -200],
       "parameters": {
         "method": "POST",
-        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/translate",
+        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/enrich",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -186,70 +177,20 @@
           "timeout": 120000
         }
       },
-      "credentials": {
-        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
-      }
-    },
-    {
-      "id": "a1000000-0000-4000-8000-000000000009",
-      "name": "Record translate failure",
+      "id": "a1000000-0000-4000-8000-000000000012",
+      "name": "Enrich",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "position": [1440, -120],
-      "parameters": {
-        "method": "POST",
-        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/fail",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ step: 'translate', message: String($json.error?.message ?? 'translate failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
-        "options": {
-          "timeout": 30000
-        }
-      },
-      "credentials": {
-        "httpHeaderAuth": "{{CRED:Draft worker secret}}"
-      }
-    },
-    {
-      "id": "a1000000-0000-4000-8000-000000000010",
-      "name": "Image",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "position": [1200, -260],
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 3000,
+      "waitBetweenTries": 5000,
       "onError": "continueErrorOutput",
-      "position": [1200, -360],
-      "parameters": {
-        "method": "POST",
-        "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/image",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{}",
-        "options": {
-          "timeout": 90000
-        }
-      },
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
     },
     {
-      "id": "a1000000-0000-4000-8000-000000000011",
-      "name": "Record image failure",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "position": [1440, -300],
       "parameters": {
         "method": "POST",
         "url": "=${WORKER_URL}/v1/drafts/{{ $('Ingest').item.json.draft_id }}/fail",
@@ -257,11 +198,19 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ step: 'image', message: String($json.error?.message ?? 'image failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
+        "jsonBody": "={{ JSON.stringify({ step: 'enrich', message: String($json.error?.message ?? 'enrich failed').slice(0, 1000), detail: { status: $json.error?.status ?? null, code: $json.error?.code ?? null } }) }}",
         "options": {
           "timeout": 30000
         }
       },
+      "id": "a1000000-0000-4000-8000-000000000013",
+      "name": "Record enrich failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, -200],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
       "credentials": {
         "httpHeaderAuth": "{{CRED:Draft worker secret}}"
       }
@@ -323,12 +272,7 @@
       "main": [
         [
           {
-            "node": "Translate",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Image",
+            "node": "Enrich",
             "type": "main",
             "index": 0
           }
@@ -342,24 +286,12 @@
         ]
       ]
     },
-    "Translate": {
+    "Enrich": {
       "main": [
         [],
         [
           {
-            "node": "Record translate failure",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Image": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Record image failure",
+            "node": "Record enrich failure",
             "type": "main",
             "index": 0
           }
