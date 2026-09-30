@@ -10,7 +10,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { countDraftsByStatus, listBrands, listDrafts } from "@/lib/queries";
-import { STATUS_TABS, isDraftStatus, parseContent, timeAgo } from "@/lib/review";
+import {
+  STATUS_TABS,
+  isDraftStatus,
+  parseClaims,
+  parseContent,
+  timeAgo,
+  unverifiedCount,
+} from "@/lib/review";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Review queue" };
@@ -116,6 +123,7 @@ export default async function DraftsPage({ searchParams }: { searchParams: Searc
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Proposed title</TableHead>
                 <TableHead>Brand</TableHead>
+                <TableHead className="hidden lg:table-cell">Fact check</TableHead>
                 <TableHead className="hidden sm:table-cell">Status</TableHead>
                 <TableHead className="text-right">Created</TableHead>
               </TableRow>
@@ -138,6 +146,20 @@ export default async function DraftsPage({ searchParams }: { searchParams: Searc
                     {parseContent(d.content)?.title ?? "–"}
                   </TableCell>
                   <TableCell className="text-sm">{d.brand.name}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {(() => {
+                      const flagged = unverifiedCount(parseClaims(d.claims));
+                      if (parseClaims(d.claims) === null)
+                        return <span className="text-xs text-muted-foreground">not checked</span>;
+                      return flagged === 0 ? (
+                        <span className="text-xs text-muted-foreground">all supported</span>
+                      ) : (
+                        <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs ring-1 ring-warning/40 ring-inset">
+                          {flagged} to check
+                        </span>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <StatusBadge status={d.status} />
                   </TableCell>

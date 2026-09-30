@@ -1,10 +1,17 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { ListingContentSchema, type ListingContent } from "@draft/shared";
+import {
+  ClaimCheckSchema,
+  ListingContentSchema,
+  type Claim,
+  type ListingContent,
+} from "@draft/shared";
 import { z } from "zod";
 import { AppError } from "./errors";
 import { OpenAiListingGenerator } from "./generator-openai";
 import {
+  claimCheckSystemPrompt,
+  claimCheckUserPrompt,
   generateSystemPrompt,
   generateUserPrompt,
   translateSystemPrompt,
@@ -25,6 +32,12 @@ export interface TranslateResult {
   usage: GenerateResult["usage"];
 }
 
+export interface ClaimCheckResult {
+  claims: Claim[];
+  model: string;
+  usage: GenerateResult["usage"];
+}
+
 /** The LLM boundary. The worker talks to this interface; tests pass a fake. */
 export interface ListingGenerator {
   generate(brand: BrandVoice, product: ProductFacts): Promise<GenerateResult>;
@@ -33,6 +46,7 @@ export interface ListingGenerator {
     content: ListingContent,
     locales: readonly string[],
   ): Promise<TranslateResult>;
+  checkClaims(sourceText: string, content: ListingContent): Promise<ClaimCheckResult>;
 }
 
 export function translationSchema(locales: readonly string[]) {
@@ -138,6 +152,40 @@ export class ClaudeListingGenerator implements ListingGenerator {
     }
     return {
       translations: response.parsed_output as Record<string, ListingContent>,
+      model: response.model,
+      usage: {
+        input_tokens: response.usage.input_tokens,
+        output_tokens: response.usage.output_tokens,
+        cache_read_input_tokens: response.usage.cache_read_input_tokens ?? 0,
+      },
+    };
+  }
+
+  async checkClaims(sourceText: string, content: ListingContent): Promise<ClaimCheckResult> {
+    let response;
+    try {
+      response = await this.getClient().messages.parse({
+        model: this.model,
+        max_tokens: 8000,
+        system: [
+          { type: "text", text: claimCheckSystemPrompt(), cache_control: { type: "ephemeral" } },
+        ],
+        messages: [{ role: "user", content: claimCheckUserPrompt(sourceText, content) }],
+        output_config: { effort: "low", format: zodOutputFormat(ClaimCheckSchema) },
+      });
+    } catch (err) {
+      if (err instanceof APIError)
+        throw new AppError("llm_failed", `claude ${err.status ?? "error"}: ${err.message}`);
+      throw err;
+    }
+    if (!response.parsed_output) {
+      throw new AppError(
+        "llm_failed",
+        `no structured output (stop_reason ${response.stop_reason})`,
+      );
+    }
+    return {
+      claims: response.parsed_output.claims,
       model: response.model,
       usage: {
         input_tokens: response.usage.input_tokens,

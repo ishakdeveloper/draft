@@ -70,6 +70,21 @@ stateDiagram-v2
 draft to `approved` or `rejected`; column grants limit reviewers to `status`, `content`,
 `translations` and `review_note`. Nothing in code approves a draft.
 
+## The claim check
+
+After a listing is written, a second model pass lists every factual statement it makes and
+quotes the passage of the product text that supports each one. That verdict is not trusted on
+its own: `verifyClaims` in `packages/shared` checks the quoted span really occurs in the source,
+and a claim counts as verified only when the model says it is supported **and** the quote is
+found. A confident model that invents its own evidence is caught in code, which is the same
+fail-closed rule the arithmetic check uses in Docket.
+
+The brand name is part of the evidence rather than something the prompt argues about, so a
+listing naming its own brand is not flagged.
+
+It is advisory by design. Unsupported statements are shown to the reviewer and counted in the
+queue; nothing is blocked and no status changes. Deciding is still the person's job.
+
 ## Model providers
 
 `ListingGenerator` has two implementations, `ClaudeListingGenerator` and

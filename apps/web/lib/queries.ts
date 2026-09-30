@@ -27,7 +27,7 @@ export async function listDrafts(status: DraftStatus, brandId: string | null) {
   let query = supabase
     .from("listing_drafts")
     .select(
-      "id, status, version, created_at, updated_at, model, content, brand:brands(id, name, slug), product:products(title, product_type)",
+      "id, status, version, created_at, updated_at, model, content, claims, brand:brands(id, name, slug), product:products(title, product_type)",
     )
     .eq("status", status)
     .order("created_at", { ascending: false })
@@ -43,7 +43,7 @@ export async function getDraft(id: string) {
   const { data, error } = await supabase
     .from("listing_drafts")
     .select(
-      "id, status, version, created_at, updated_at, model, content, translations, image_path, review_note, error, approved_at, rejected_at, published_at, brand:brands(id, name, slug, default_locale, target_locales, tone_guide), product:products(title, body_html, handle, product_type, tags, shopify_gid)",
+      "id, status, version, created_at, updated_at, model, content, translations, claims, claims_checked_at, image_path, review_note, error, approved_at, rejected_at, published_at, brand:brands(id, name, slug, default_locale, target_locales, tone_guide), product:products(title, body_html, handle, product_type, tags, shopify_gid)",
     )
     .eq("id", id)
     .maybeSingle();

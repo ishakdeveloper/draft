@@ -81,3 +81,34 @@ export function translateUserPrompt(content: object): string {
     JSON.stringify(content, null, 2),
   ].join("\n");
 }
+
+/**
+ * The claim check. It deliberately asks only "does the source say this", never "is this good".
+ * The model's verdict is not trusted on its own: it must quote the passage it relied on, and
+ * that quote is checked against the source in code (verifyClaims in @draft/shared).
+ */
+export function claimCheckSystemPrompt(): string {
+  return [
+    "You compare a product listing against the source text it was written from.",
+    "List every factual statement the listing makes: ingredients, percentages, sizes, materials,",
+    "counts, certifications, usage instructions and any claim about what the product does.",
+    "For each one, say whether the source text supports it.",
+    "When it is supported, quote the exact passage of the source that supports it, word for word.",
+    "When it is not supported, set source_span to null and say briefly what is missing.",
+    "Do not judge tone, grammar or style. Only whether the source says it.",
+    "Marketing language with no factual content, such as 'a quiet moment at the end of the day',",
+    "is not a claim and should be left out.",
+    "The brand name and the product name are given, not claims. Leave them out.",
+    "Copy the statement into `text` exactly as it appears in the listing.",
+  ].join("\n");
+}
+
+export function claimCheckUserPrompt(sourceText: string, listing: object): string {
+  return [
+    "SOURCE TEXT, the only thing that counts as evidence:",
+    sourceText || "(empty)",
+    "",
+    "LISTING to check:",
+    JSON.stringify(listing, null, 2),
+  ].join("\n");
+}

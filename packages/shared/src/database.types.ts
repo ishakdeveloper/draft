@@ -121,6 +121,8 @@ export type Database = {
         Row: {
           approved_at: string | null
           brand_id: string
+          claims: Json | null
+          claims_checked_at: string | null
           content: Json | null
           created_at: string
           error: Json | null
@@ -173,6 +175,8 @@ export type Database = {
         Update: {
           approved_at?: string | null
           brand_id?: string
+          claims?: Json | null
+          claims_checked_at?: string | null
           content?: Json | null
           created_at?: string
           error?: Json | null

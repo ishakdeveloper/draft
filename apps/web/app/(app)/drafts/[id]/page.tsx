@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DraftReview } from "@/components/draft-review";
+import { ClaimReport } from "@/components/claim-report";
 import { PipelineTimeline } from "@/components/pipeline-timeline";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDraft, heroImageUrl, listEvents } from "@/lib/queries";
-import { parseContent, parseTranslations, timeAgo } from "@/lib/review";
+import { parseClaims, parseContent, parseTranslations, timeAgo } from "@/lib/review";
 import { sanitizeListingHtml } from "@/lib/sanitize-html";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,6 +29,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
     heroImageUrl(draft.image_path),
   ]);
   const content = parseContent(draft.content);
+  const claims = parseClaims(draft.claims);
   const translations = parseTranslations(draft.translations);
   const failure = (draft.error ?? null) as { message?: string; step?: string } | null;
 
@@ -85,6 +87,8 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <aside className="space-y-6">
+          <ClaimReport claims={claims} checkedAt={draft.claims_checked_at} />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Current Shopify listing</CardTitle>

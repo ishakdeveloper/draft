@@ -1,10 +1,17 @@
-import { ListingContentSchema, type ListingContent } from "@draft/shared";
+import { ClaimCheckSchema, ListingContentSchema, type ListingContent } from "@draft/shared";
 import OpenAI, { APIError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { AppError } from "./errors";
-import type { GenerateResult, ListingGenerator, TranslateResult } from "./generator";
+import type {
+  ClaimCheckResult,
+  GenerateResult,
+  ListingGenerator,
+  TranslateResult,
+} from "./generator";
 import { translationSchema } from "./generator";
 import {
+  claimCheckSystemPrompt,
+  claimCheckUserPrompt,
   generateSystemPrompt,
   generateUserPrompt,
   translateSystemPrompt,
@@ -93,5 +100,14 @@ export class OpenAiListingGenerator implements ListingGenerator {
       zodTextFormat(translationSchema(locales), "translations"),
     );
     return { translations: parsed, model, usage };
+  }
+
+  async checkClaims(sourceText: string, content: ListingContent): Promise<ClaimCheckResult> {
+    const { parsed, model, usage } = await this.parse<{ claims: ClaimCheckResult["claims"] }>(
+      claimCheckSystemPrompt(),
+      claimCheckUserPrompt(sourceText, content),
+      zodTextFormat(ClaimCheckSchema, "claim_check"),
+    );
+    return { claims: parsed.claims, model, usage };
   }
 }

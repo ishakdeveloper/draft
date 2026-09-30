@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  VerifiedClaimsSchema,
+  type VerifiedClaim,
   ListingContentSchema,
   TranslationsSchema,
   type DraftStatus,
@@ -79,4 +81,15 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   if (hours < 24) return `${hours} h ago`;
   const days = Math.round(hours / 24);
   return `${days} d ago`;
+}
+
+/** Claims as stored by the check step. Anything malformed is treated as "not checked". */
+export function parseClaims(value: unknown): VerifiedClaim[] | null {
+  if (value === null || value === undefined) return null;
+  const parsed = VerifiedClaimsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+export function unverifiedCount(claims: VerifiedClaim[] | null): number {
+  return claims ? claims.filter((c) => !c.verified).length : 0;
 }
