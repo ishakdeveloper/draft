@@ -15,6 +15,7 @@
     "@draft/shared": "workspace:*",
     "@supabase/supabase-js": "^2.117.2",
     "hono": "^4.13.9",
+    "openai": "^7.25.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -70,6 +70,14 @@ stateDiagram-v2
 draft to `approved` or `rejected`; column grants limit reviewers to `status`, `content`,
 `translations` and `review_note`. Nothing in code approves a draft.
 
+## Model providers
+
+`ListingGenerator` has two implementations, `ClaudeListingGenerator` and
+`OpenAiListingGenerator`, selected by `MODEL_PROVIDER` the same way `IMAGE_PROVIDER` selects the
+image backend. Prompts, the Zod schema and the result shape are shared; only the transport
+differs. Anthropic is the default. Both are constructed without their key, so a Worker with no
+model key at all still serves ingest, publish and fail.
+
 ## Security
 
 - Row level security on every table, scoped by `brand_members` through `private.is_brand_member()`.
@@ -91,8 +99,6 @@ expiry. n8n never holds a store token. Webhooks are registered by the Worker
 
 ## Known limits
 
-- Image and translate run one after the other in n8n; running them in parallel would save
-  about 7 seconds per product.
 - Editing the default-language text does not re-translate; translations are made when the
   listing is written.
 - Replacing a hero image in Shopify needs the `write_files` scope to delete the previous one.

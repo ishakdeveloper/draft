@@ -1,14 +1,20 @@
 import { createApp, type Deps } from "./app";
 import { readConfig, type WorkerEnv } from "./env";
 import { createServiceClient } from "./lib/supabase";
-import { ClaudeListingGenerator } from "./lib/generator";
+import { createListingGenerator } from "./lib/generator";
 import { createImageProvider } from "./lib/image";
 
 function depsFromEnv({ env }: { env: unknown }): Deps {
   const config = readConfig(env as WorkerEnv);
   return {
     db: createServiceClient(config.supabaseUrl, config.supabaseServiceRoleKey),
-    generator: new ClaudeListingGenerator(config.anthropicApiKey, config.claudeModel),
+    generator: createListingGenerator({
+      provider: config.modelProvider,
+      anthropicApiKey: config.anthropicApiKey,
+      claudeModel: config.claudeModel,
+      openaiApiKey: config.openaiApiKey,
+      openaiModel: config.openaiModel,
+    }),
     pipelineSecret: config.pipelineSecret,
     appVersion: config.appVersion,
     shopify: {

@@ -3,6 +3,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ListingContentSchema, type ListingContent } from "@draft/shared";
 import { z } from "zod";
 import { AppError } from "./errors";
+import { OpenAiListingGenerator } from "./generator-openai";
 import {
   generateSystemPrompt,
   generateUserPrompt,
@@ -145,4 +146,32 @@ export class ClaudeListingGenerator implements ListingGenerator {
       },
     };
   }
+}
+
+export type ModelProvider = "anthropic" | "openai";
+
+export function isModelProvider(value: string): value is ModelProvider {
+  return value === "anthropic" || value === "openai";
+}
+
+export interface GeneratorConfig {
+  provider: string;
+  anthropicApiKey: string | null;
+  claudeModel: string;
+  openaiApiKey: string | null;
+  openaiModel: string;
+}
+
+/**
+ * Pick the model provider. Anthropic is the default; the key is checked when a step actually
+ * runs, not here, so ingest and publish work on a Worker with no model key at all.
+ */
+export function createListingGenerator(config: GeneratorConfig): ListingGenerator {
+  if (!isModelProvider(config.provider)) {
+    throw new AppError("config", `unknown MODEL_PROVIDER "${config.provider}"`);
+  }
+  if (config.provider === "openai") {
+    return new OpenAiListingGenerator(config.openaiApiKey, config.openaiModel);
+  }
+  return new ClaudeListingGenerator(config.anthropicApiKey, config.claudeModel);
 }

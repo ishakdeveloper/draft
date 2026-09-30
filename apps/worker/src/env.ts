@@ -8,6 +8,8 @@ type SecretName = (typeof SECRET_NAMES)[number];
 export type Secrets = Record<SecretName, string> & {
   /** Only needed by the generate step; ingest and fail work without it. */
   ANTHROPIC_API_KEY?: string;
+  /** Only needed when MODEL_PROVIDER is openai. */
+  OPENAI_API_KEY?: string;
   SHOPIFY_CLIENT_ID?: string;
   SHOPIFY_CLIENT_SECRET?: string;
   /** Header secret n8n expects on its product webhook. */
@@ -22,6 +24,9 @@ export interface Config {
   anthropicApiKey: string | null;
   pipelineSecret: string;
   claudeModel: string;
+  modelProvider: string;
+  openaiApiKey: string | null;
+  openaiModel: string;
   shopifyApiVersion: string;
   appVersion: string;
   imageProvider: string;
@@ -48,6 +53,9 @@ export function readConfig(env: WorkerEnv): Config {
     anthropicApiKey: env.ANTHROPIC_API_KEY ?? null,
     pipelineSecret: env.PIPELINE_SECRET,
     claudeModel: env.CLAUDE_MODEL,
+    modelProvider: env.MODEL_PROVIDER,
+    openaiApiKey: env.OPENAI_API_KEY ?? null,
+    openaiModel: env.OPENAI_MODEL,
     shopifyApiVersion: env.SHOPIFY_API_VERSION,
     appVersion: env.APP_VERSION,
     imageProvider: env.IMAGE_PROVIDER,
